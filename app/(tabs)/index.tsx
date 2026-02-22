@@ -1,14 +1,30 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React from "react";
-import { ActivityIndicator, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 
 import { T } from "@/constants/theme";
 import { useAppData } from "@/hooks/useAppData";
-import { formatMoney, todayISO } from "@/lib/date";
+import { formatMoney, isSameMonth, monthName, todayISO } from "@/lib/date";
 import { AppointmentStatus } from "@/types";
 
-function MetricCard({ label, value, color }: { label: string; value: string | number; color?: string }) {
+function MetricCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: string | number;
+  color?: string;
+}) {
   return (
     <View style={styles.metricCard}>
       <Text style={[styles.metricValue, color ? { color } : null]}>{value}</Text>
@@ -24,14 +40,65 @@ export default function DashboardScreen() {
   const today = new Date();
   const todayStr = todayISO();
 
+  // Estado do seletor mensal
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-based
+
+  // Métricas do dia
   const todayAll = appointments.filter((a) => a.date === todayStr);
   const todayScheduled = todayAll.filter((a) => a.status === AppointmentStatus.SCHEDULED);
   const todayDone = todayAll.filter((a) => a.status === AppointmentStatus.DONE);
   const todayRevenue = todayDone.reduce((sum, a) => sum + a.price, 0);
   const todayCancelled = todayAll.filter((a) => a.status === AppointmentStatus.CANCELLED);
 
+  // Totais gerais
   const activeServices = services.filter((s) => s.active);
   const activeBarbers = barbers.filter((b) => b.active);
+
+  // Seletor de mês: prev/next
+  function prevMonth() {
+    if (viewMonth === 0) {
+      setViewYear((y) => y - 1);
+      setViewMonth(11);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  }
+
+  function nextMonth() {
+    if (viewMonth === 11) {
+      setViewYear((y) => y + 1);
+      setViewMonth(0);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  }
+
+  // Métricas e breakdown mensal
+  const monthlyData = useMemo(() => {
+    const monthly = appointments.filter((a) => isSameMonth(a.date, viewYear, viewMonth));
+    const done = monthly.filter((a) => a.status === AppointmentStatus.DONE);
+    const revenue = done.reduce((sum, a) => sum + a.price, 0);
+
+    // Agrupamento por dia
+    const byDay: Record<string, { count: number; revenue: number }> = {};
+    done.forEach((a) => {
+      if (!byDay[a.date]) byDay[a.date] = { count: 0, revenue: 0 };
+      byDay[a.date].count += 1;
+      byDay[a.date].revenue += a.price;
+    });
+
+    const days = Object.entries(byDay)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, data]) => {
+        const d = date.split("-")[2];
+        return { day: parseInt(d, 10), ...data, dateStr: date };
+      });
+
+    return { total: monthly.length, done: done.length, revenue, days };
+  }, [appointments, viewYear, viewMonth]);
+
+  const isCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -60,7 +127,7 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Data de hoje */}
+          {/* Data */}
           <View style={styles.dateRow}>
             <Ionicons name="calendar-outline" size={14} color={T.colors.textMuted} />
             <Text style={styles.dateText}>
@@ -78,10 +145,10 @@ export default function DashboardScreen() {
             <MetricCard label="Agendados" value={todayScheduled.length} color={T.colors.scheduled} />
             <MetricCard label="Concluídos" value={todayDone.length} color={T.colors.done} />
             <MetricCard label="Cancelados" value={todayCancelled.length} color={T.colors.cancelled} />
-            <MetricCard label="Receita do dia" value={formatMoney(todayRevenue)} color={T.colors.textPrimary} />
+            <MetricCard label="Receita do dia" value={formatMoney(todayRevenue)} />
           </View>
 
-          {/* Seção: Totais gerais */}
+          {/* Seção: Geral */}
           <Text style={styles.sectionTitle}>Geral</Text>
           <View style={styles.metricsRow}>
             <View style={styles.generalCard}>
@@ -100,6 +167,81 @@ export default function DashboardScreen() {
               <Text style={styles.generalLabel}>Barbeiros{"\n"}ativos</Text>
             </View>
           </View>
+
+          {/* Seção: Mensal */}
+          <View style={styles.monthlyHeader}>
+            <Text style={styles.sectionTitle}>Mensal</Text>
+            {/* Seletor mês */}
+            <View style={styles.monthSelector}>
+              <Pressable
+                onPress={prevMonth}
+                hitSlop={8}
+                style={({ pressed }) => pressed && { opacity: 0.5 }}
+              >
+                <Ionicons name="chevron-back" size={20} color={T.colors.textPrimary} />
+              </Pressable>
+              <Text style={styles.monthLabel}>
+                {monthName(viewMonth)} {viewYear}
+                {isCurrentMonth ? " ●" : ""}
+              </Text>
+              <Pressable
+                onPress={nextMonth}
+                hitSlop={8}
+                style={({ pressed }) => pressed && { opacity: 0.5 }}
+              >
+                <Ionicons name="chevron-forward" size={20} color={T.colors.textPrimary} />
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Cards mensais */}
+          <View style={styles.metricsGrid}>
+            <MetricCard label="Atendimentos" value={monthlyData.total} />
+            <MetricCard label="Concluídos" value={monthlyData.done} color={T.colors.done} />
+            <MetricCard
+              label="Receita do mês"
+              value={formatMoney(monthlyData.revenue)}
+              color={T.colors.textPrimary}
+            />
+            <MetricCard
+              label="Ticket médio"
+              value={
+                monthlyData.done > 0
+                  ? formatMoney(monthlyData.revenue / monthlyData.done)
+                  : "—"
+              }
+            />
+          </View>
+
+          {/* Breakdown por dia */}
+          {monthlyData.days.length > 0 && (
+            <View style={styles.breakdown}>
+              <Text style={styles.breakdownTitle}>Detalhamento por dia</Text>
+              {monthlyData.days.map((d) => (
+                <View key={d.dateStr} style={styles.breakdownRow}>
+                  <Text style={styles.breakdownDay}>Dia {String(d.day).padStart(2, "0")}</Text>
+                  <View style={styles.breakdownBar}>
+                    <View
+                      style={[
+                        styles.breakdownFill,
+                        {
+                          width: `${Math.min((d.revenue / (monthlyData.revenue || 1)) * 100, 100)}%`,
+                        },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.breakdownCount}>{d.count}x</Text>
+                  <Text style={styles.breakdownRevenue}>{formatMoney(d.revenue)}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {monthlyData.total === 0 && (
+            <View style={styles.monthEmpty}>
+              <Text style={styles.monthEmptyText}>Sem agendamentos em {monthName(viewMonth)}</Text>
+            </View>
+          )}
         </ScrollView>
       )}
     </SafeAreaView>
@@ -107,10 +249,7 @@ export default function DashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: T.colors.bg,
-  },
+  safe: { flex: 1, backgroundColor: T.colors.bg },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -134,17 +273,9 @@ const styles = StyleSheet.create({
     letterSpacing: 2,
     marginTop: -2,
   },
-  settingsBtn: {
-    padding: T.spacing.xs,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  scroll: {
-    flex: 1,
-  },
+  settingsBtn: { padding: T.spacing.xs },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  scroll: { flex: 1 },
   scrollContent: {
     padding: T.spacing.md,
     paddingBottom: T.spacing.xxl,
@@ -218,5 +349,90 @@ const styles = StyleSheet.create({
     color: T.colors.textSecondary,
     textAlign: "center",
     lineHeight: 16,
+  },
+  // Mensal
+  monthlyHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: T.spacing.md,
+    marginBottom: T.spacing.xs,
+  },
+  monthSelector: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: T.spacing.sm,
+    backgroundColor: T.colors.surface,
+    borderRadius: T.radius.md,
+    borderWidth: 1,
+    borderColor: T.colors.border,
+    paddingHorizontal: T.spacing.sm,
+    paddingVertical: T.spacing.xs,
+  },
+  monthLabel: {
+    fontSize: T.fontSize.sm,
+    fontWeight: T.fontWeight.semibold,
+    color: T.colors.textPrimary,
+    minWidth: 110,
+    textAlign: "center",
+  },
+  breakdown: {
+    backgroundColor: T.colors.surface,
+    borderRadius: T.radius.lg,
+    borderWidth: 1,
+    borderColor: T.colors.border,
+    padding: T.spacing.md,
+    gap: T.spacing.sm,
+    marginTop: T.spacing.xs,
+  },
+  breakdownTitle: {
+    fontSize: T.fontSize.sm,
+    fontWeight: T.fontWeight.semibold,
+    color: T.colors.textSecondary,
+    marginBottom: T.spacing.xs,
+  },
+  breakdownRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: T.spacing.sm,
+  },
+  breakdownDay: {
+    fontSize: T.fontSize.sm,
+    color: T.colors.textMuted,
+    width: 40,
+  },
+  breakdownBar: {
+    flex: 1,
+    height: 6,
+    borderRadius: T.radius.full,
+    backgroundColor: T.colors.border,
+    overflow: "hidden",
+  },
+  breakdownFill: {
+    height: "100%",
+    backgroundColor: T.colors.black,
+    borderRadius: T.radius.full,
+  },
+  breakdownCount: {
+    fontSize: T.fontSize.xs,
+    color: T.colors.textMuted,
+    width: 24,
+    textAlign: "center",
+  },
+  breakdownRevenue: {
+    fontSize: T.fontSize.sm,
+    fontWeight: T.fontWeight.semibold,
+    color: T.colors.textPrimary,
+    width: 72,
+    textAlign: "right",
+  },
+  monthEmpty: {
+    padding: T.spacing.lg,
+    alignItems: "center",
+  },
+  monthEmptyText: {
+    fontSize: T.fontSize.sm,
+    color: T.colors.textMuted,
+    fontStyle: "italic",
   },
 });
