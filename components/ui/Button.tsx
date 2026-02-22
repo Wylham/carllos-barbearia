@@ -1,6 +1,8 @@
-import { T } from "@/constants/theme";
-import React from "react";
+import React, { useMemo } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
@@ -16,6 +18,56 @@ interface ButtonProps {
   style?: ViewStyle;
 }
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    base: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: T.radius.md,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+    },
+    fullWidth: { width: "100%" },
+    pressed: { opacity: 0.75 },
+    disabled: { opacity: 0.38 },
+
+    primary: {
+      backgroundColor: colors.primaryAction,
+      borderColor: colors.primaryAction,
+    },
+    secondary: {
+      backgroundColor: "transparent",
+      borderColor: colors.primaryAction,
+    },
+    ghost: {
+      backgroundColor: "transparent",
+      borderColor: "transparent",
+    },
+    danger: {
+      backgroundColor: colors.error,
+      borderColor: colors.error,
+    },
+
+    size_sm: { paddingVertical: T.spacing.xs, paddingHorizontal: T.spacing.sm, minHeight: 32 },
+    size_md: { paddingVertical: T.spacing.sm + 2, paddingHorizontal: T.spacing.md, minHeight: 44 },
+    size_lg: { paddingVertical: T.spacing.md, paddingHorizontal: T.spacing.lg, minHeight: 52 },
+
+    label: {
+      fontWeight: T.fontWeight.semibold,
+      letterSpacing: 0.2,
+    },
+    labelVariant_primary: { color: colors.primaryActionText },
+    labelVariant_secondary: { color: colors.primaryAction },
+    labelVariant_ghost: { color: colors.textPrimary },
+    labelVariant_danger: { color: colors.white },
+
+    labelSize_sm: { fontSize: T.fontSize.sm },
+    labelSize_md: { fontSize: T.fontSize.md },
+    labelSize_lg: { fontSize: T.fontSize.lg },
+  });
+}
+
 export function Button({
   label,
   onPress,
@@ -26,6 +78,8 @@ export function Button({
   fullWidth = false,
   style,
 }: ButtonProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isDisabled = disabled || loading;
 
   return (
@@ -43,67 +97,15 @@ export function Button({
       ]}
     >
       {loading ? (
-        <ActivityIndicator size="small" color={variant === "primary" ? T.colors.white : T.colors.black} />
+        <ActivityIndicator
+          size="small"
+          color={variant === "primary" ? colors.primaryActionText : colors.primaryAction}
+        />
       ) : (
-        <Text style={[styles.label, styles[`labelVariant_${variant}`], styles[`labelSize_${size}`]]}>{label}</Text>
+        <Text style={[styles.label, styles[`labelVariant_${variant}`], styles[`labelSize_${size}`]]}>
+          {label}
+        </Text>
       )}
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: T.radius.md,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-  },
-  fullWidth: {
-    width: "100%",
-  },
-  pressed: {
-    opacity: 0.75,
-  },
-  disabled: {
-    opacity: 0.38,
-  },
-
-  // Variants
-  primary: {
-    backgroundColor: T.colors.black,
-    borderColor: T.colors.black,
-  },
-  secondary: {
-    backgroundColor: T.colors.white,
-    borderColor: T.colors.black,
-  },
-  ghost: {
-    backgroundColor: "transparent",
-    borderColor: "transparent",
-  },
-  danger: {
-    backgroundColor: T.colors.error,
-    borderColor: T.colors.error,
-  },
-
-  // Sizes
-  size_sm: { paddingVertical: T.spacing.xs, paddingHorizontal: T.spacing.sm, minHeight: 32 },
-  size_md: { paddingVertical: T.spacing.sm + 2, paddingHorizontal: T.spacing.md, minHeight: 44 },
-  size_lg: { paddingVertical: T.spacing.md, paddingHorizontal: T.spacing.lg, minHeight: 52 },
-
-  // Labels
-  label: {
-    fontWeight: T.fontWeight.semibold,
-    letterSpacing: 0.2,
-  },
-  labelVariant_primary: { color: T.colors.white },
-  labelVariant_secondary: { color: T.colors.black },
-  labelVariant_ghost: { color: T.colors.black },
-  labelVariant_danger: { color: T.colors.white },
-
-  labelSize_sm: { fontSize: T.fontSize.sm },
-  labelSize_md: { fontSize: T.fontSize.md },
-  labelSize_lg: { fontSize: T.fontSize.lg },
-});

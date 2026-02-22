@@ -1,6 +1,6 @@
 /**
  * CARLLOS BARBEARIA — Design Tokens
- * Tema preto e branco com suporte ao hook useColorScheme existente.
+ * Suporte a tema claro e escuro via lightColors / darkColors.
  */
 
 import { Platform } from "react-native";
@@ -25,37 +25,83 @@ export const Colors = {
   },
 };
 
-// Tokens do app (tema fixo preto/branco — independente do dark mode do SO)
+// ─── Paletas de cores ─────────────────────────────────────────────────────────
+
+export const lightColors = {
+  black: "#111111",
+  white: "#FFFFFF",
+
+  bg: "#FFFFFF",
+  surface: "#F7F7F7",
+  surfaceAlt: "#EFEFEF",
+  border: "#E0E0E0",
+  borderStrong: "#BBBBBB",
+
+  textPrimary: "#111111",
+  textSecondary: "#555555",
+  textMuted: "#999999",
+  textInverse: "#FFFFFF",
+  textDisabled: "#BBBBBB",
+
+  accent: "#111111",
+  accentHover: "#333333",
+
+  // Cor de ação primária (botão/destaque) — inverte no tema escuro
+  primaryAction: "#111111",
+  primaryActionText: "#FFFFFF",
+
+  // Status de agendamento
+  scheduled: "#1A6BB5",
+  done: "#2A7A2A",
+  cancelled: "#B22020",
+
+  success: "#2A7A2A",
+  error: "#B22020",
+  warning: "#CC8800",
+  info: "#1A6BB5",
+};
+
+export const darkColors = {
+  black: "#111111",
+  white: "#FFFFFF",
+
+  bg: "#111111",
+  surface: "#1C1C1C",
+  surfaceAlt: "#252525",
+  border: "#2E2E2E",
+  borderStrong: "#484848",
+
+  textPrimary: "#F0F0F0",
+  textSecondary: "#A0A0A0",
+  textMuted: "#606060",
+  textInverse: "#111111",
+  textDisabled: "#484848",
+
+  accent: "#F0F0F0",
+  accentHover: "#CCCCCC",
+
+  // Botão primário fica claro sobre fundo escuro
+  primaryAction: "#F0F0F0",
+  primaryActionText: "#111111",
+
+  // Status — versões mais claras para fundos escuros
+  scheduled: "#5B9BD5",
+  done: "#4CAF50",
+  cancelled: "#E57373",
+
+  success: "#4CAF50",
+  error: "#E57373",
+  warning: "#FFB74D",
+  info: "#5B9BD5",
+} satisfies typeof lightColors;
+
+export type AppColors = typeof lightColors;
+
+// ─── T — tokens não-cor (imutáveis) + fallback estático de cores ──────────────
+// Para cores dinâmicas, use useTheme() de @/contexts/ThemeContext.
+
 export const T = {
-  colors: {
-    black: "#111111",
-    white: "#FFFFFF",
-
-    bg: "#FFFFFF",
-    surface: "#F7F7F7",
-    surfaceAlt: "#EFEFEF",
-    border: "#E0E0E0",
-    borderStrong: "#BBBBBB",
-
-    textPrimary: "#111111",
-    textSecondary: "#555555",
-    textMuted: "#999999",
-    textInverse: "#FFFFFF",
-    textDisabled: "#BBBBBB",
-
-    accent: "#111111",
-    accentHover: "#333333",
-
-    // Status de agendamento
-    scheduled: "#1A6BB5",
-    done: "#2A7A2A",
-    cancelled: "#B22020",
-
-    success: "#2A7A2A",
-    error: "#B22020",
-    warning: "#CC8800",
-    info: "#1A6BB5",
-  },
+  colors: lightColors, // fallback estático (usado na tab bar, entre outros)
 
   spacing: {
     xxs: 2,
@@ -128,7 +174,8 @@ export const Fonts = Platform.select({
   web: {
     sans: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     serif: "Georgia, 'Times New Roman', serif",
-    rounded: "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
+    rounded:
+      "'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif",
     mono: "SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
   },
 });

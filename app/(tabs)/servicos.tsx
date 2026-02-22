@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -14,12 +14,117 @@ import {
 import { ServiceForm } from "@/components/modals/ServiceForm";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { T } from "@/constants/theme";
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAppData } from "@/hooks/useAppData";
 import { formatMoney } from "@/lib/date";
 import { Service } from "@/types";
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: T.spacing.md,
+      paddingTop: T.spacing.lg,
+      paddingBottom: T.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
+    headerTitle: {
+      fontSize: T.fontSize.xl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    statsRow: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    statBox: {
+      flex: 1,
+      alignItems: "center",
+      paddingVertical: T.spacing.md,
+      gap: T.spacing.xxs,
+    },
+    statBoxDivider: {
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: colors.border,
+    },
+    statValue: {
+      fontSize: T.fontSize.xxl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    statLabel: {
+      fontSize: T.fontSize.xs,
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    list: {
+      padding: T.spacing.md,
+      gap: T.spacing.xs,
+    },
+    item: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: T.spacing.sm,
+      padding: T.spacing.md,
+      backgroundColor: colors.surface,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    itemInactive: { opacity: 0.6 },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.done,
+    },
+    dotInactive: { backgroundColor: colors.textMuted },
+    itemInfo: { flex: 1, gap: 2 },
+    itemName: {
+      fontSize: T.fontSize.md,
+      fontWeight: T.fontWeight.medium,
+      color: colors.textPrimary,
+    },
+    itemPrice: {
+      fontSize: T.fontSize.sm,
+      color: colors.textSecondary,
+    },
+    textInactive: { color: colors.textMuted },
+    itemActions: { flexDirection: "row", gap: T.spacing.xs },
+    iconBtn: {
+      padding: T.spacing.xs,
+      borderRadius: T.radius.sm,
+    },
+    pressed: { opacity: 0.6 },
+    empty: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      gap: T.spacing.md,
+      padding: T.spacing.xl,
+    },
+    emptyTitle: {
+      fontSize: T.fontSize.lg,
+      fontWeight: T.fontWeight.semibold,
+      color: colors.textSecondary,
+      textAlign: "center",
+    },
+  });
+}
+
 export default function ServicosScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { services, appointments, loading, addService, updateService, deleteService } = useAppData();
 
   const [formVisible, setFormVisible] = useState(false);
@@ -49,7 +154,6 @@ export default function ServicosScreen() {
   }
 
   function openDelete(s: Service) {
-    // Verifica se tem agendamentos ativos
     const hasActive = appointments.some(
       (a) => a.serviceId === s.id && a.status !== "cancelled"
     );
@@ -93,14 +197,14 @@ export default function ServicosScreen() {
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
             hitSlop={6}
           >
-            <Ionicons name="create-outline" size={20} color={T.colors.textSecondary} />
+            <Ionicons name="create-outline" size={20} color={colors.textSecondary} />
           </Pressable>
           <Pressable
             onPress={() => openDelete(item)}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
             hitSlop={6}
           >
-            <Ionicons name="trash-outline" size={20} color={T.colors.cancelled} />
+            <Ionicons name="trash-outline" size={20} color={colors.cancelled} />
           </Pressable>
         </View>
       </View>
@@ -112,7 +216,7 @@ export default function ServicosScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="cut" size={22} color={T.colors.black} />
+          <Ionicons name="cut" size={22} color={colors.primaryAction} />
           <Text style={styles.headerTitle}>Serviços</Text>
         </View>
         <Button label="+ Novo" onPress={openCreate} size="sm" />
@@ -120,7 +224,7 @@ export default function ServicosScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={T.colors.black} />
+          <ActivityIndicator size="large" color={colors.primaryAction} />
         </View>
       ) : (
         <>
@@ -131,11 +235,11 @@ export default function ServicosScreen() {
               <Text style={styles.statLabel}>Total</Text>
             </View>
             <View style={[styles.statBox, styles.statBoxDivider]}>
-              <Text style={[styles.statValue, { color: T.colors.done }]}>{activeServices.length}</Text>
+              <Text style={[styles.statValue, { color: colors.done }]}>{activeServices.length}</Text>
               <Text style={styles.statLabel}>Ativos</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: T.colors.textMuted }]}>
+              <Text style={[styles.statValue, { color: colors.textMuted }]}>
                 {inactiveServices.length}
               </Text>
               <Text style={styles.statLabel}>Inativos</Text>
@@ -144,7 +248,7 @@ export default function ServicosScreen() {
 
           {sortedServices.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons name="cut-outline" size={48} color={T.colors.border} />
+              <Ionicons name="cut-outline" size={48} color={colors.border} />
               <Text style={styles.emptyTitle}>Nenhum serviço cadastrado</Text>
               <Button label="Criar primeiro serviço" onPress={openCreate} variant="secondary" />
             </View>
@@ -179,103 +283,3 @@ export default function ServicosScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.colors.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: T.spacing.md,
-    paddingTop: T.spacing.lg,
-    paddingBottom: T.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
-  headerTitle: {
-    fontSize: T.fontSize.xl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  statsRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: T.spacing.md,
-    gap: T.spacing.xxs,
-  },
-  statBoxDivider: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: T.colors.border,
-  },
-  statValue: {
-    fontSize: T.fontSize.xxl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  statLabel: {
-    fontSize: T.fontSize.xs,
-    color: T.colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  list: {
-    padding: T.spacing.md,
-    gap: T.spacing.xs,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: T.spacing.sm,
-    padding: T.spacing.md,
-    backgroundColor: T.colors.surface,
-    borderRadius: T.radius.md,
-    borderWidth: 1,
-    borderColor: T.colors.border,
-  },
-  itemInactive: { opacity: 0.6 },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.done,
-  },
-  dotInactive: { backgroundColor: T.colors.textMuted },
-  itemInfo: { flex: 1, gap: 2 },
-  itemName: {
-    fontSize: T.fontSize.md,
-    fontWeight: T.fontWeight.medium,
-    color: T.colors.textPrimary,
-  },
-  itemPrice: {
-    fontSize: T.fontSize.sm,
-    color: T.colors.textSecondary,
-  },
-  textInactive: { color: T.colors.textMuted },
-  itemActions: { flexDirection: "row", gap: T.spacing.xs },
-  iconBtn: {
-    padding: T.spacing.xs,
-    borderRadius: T.radius.sm,
-  },
-  pressed: { opacity: 0.6 },
-  empty: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: T.spacing.md,
-    padding: T.spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: T.fontSize.lg,
-    fontWeight: T.fontWeight.semibold,
-    color: T.colors.textSecondary,
-    textAlign: "center",
-  },
-});

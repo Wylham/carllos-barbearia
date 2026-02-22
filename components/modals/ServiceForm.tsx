@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { T } from "@/constants/theme";
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Service } from "@/types";
 
 interface ServiceFormProps {
@@ -14,7 +15,54 @@ interface ServiceFormProps {
   onClose: () => void;
 }
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: "flex-end",
+    },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: T.radius.xl,
+      borderTopRightRadius: T.radius.xl,
+      maxHeight: "80%",
+      ...T.shadow.md,
+    },
+    sheetHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: T.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    sheetTitle: {
+      fontSize: T.fontSize.lg,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    form: {
+      padding: T.spacing.md,
+      gap: T.spacing.md,
+    },
+    footer: {
+      flexDirection: "row",
+      gap: T.spacing.sm,
+      padding: T.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    btn: { flex: 1 },
+  });
+}
+
 export function ServiceForm({ visible, service, onSave, onClose }: ServiceFormProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isEdit = !!service;
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -59,7 +107,7 @@ export function ServiceForm({ visible, service, onSave, onClose }: ServiceFormPr
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{isEdit ? "Editar Serviço" : "Novo Serviço"}</Text>
             <Pressable onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} color={T.colors.textPrimary} />
+              <Ionicons name="close" size={22} color={colors.textPrimary} />
             </Pressable>
           </View>
 
@@ -98,46 +146,3 @@ export function ServiceForm({ visible, service, onSave, onClose }: ServiceFormPr
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  sheet: {
-    backgroundColor: T.colors.bg,
-    borderTopLeftRadius: T.radius.xl,
-    borderTopRightRadius: T.radius.xl,
-    maxHeight: "80%",
-    ...T.shadow.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: T.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  sheetTitle: {
-    fontSize: T.fontSize.lg,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  form: {
-    padding: T.spacing.md,
-    gap: T.spacing.md,
-  },
-  footer: {
-    flexDirection: "row",
-    gap: T.spacing.sm,
-    padding: T.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: T.colors.border,
-  },
-  btn: { flex: 1 },
-});

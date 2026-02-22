@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { T } from "@/constants/theme";
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Barber } from "@/types";
 
 interface BarberFormProps {
@@ -14,7 +15,113 @@ interface BarberFormProps {
   onClose: () => void;
 }
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    overlay: { flex: 1, justifyContent: "flex-end" },
+    backdrop: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: "rgba(0,0,0,0.45)",
+    },
+    sheet: {
+      backgroundColor: colors.bg,
+      borderTopLeftRadius: T.radius.xl,
+      borderTopRightRadius: T.radius.xl,
+      maxHeight: "80%",
+      ...T.shadow.md,
+    },
+    sheetHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: T.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    sheetTitle: {
+      fontSize: T.fontSize.lg,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    form: {
+      padding: T.spacing.md,
+      gap: T.spacing.md,
+    },
+    avatarRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: T.spacing.md,
+      padding: T.spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    avatar: {
+      width: 48,
+      height: 48,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.primaryAction,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    avatarLetter: {
+      fontSize: T.fontSize.xl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.primaryActionText,
+    },
+    avatarHint: {
+      flex: 1,
+      fontSize: T.fontSize.xs,
+      color: colors.textMuted,
+      fontStyle: "italic",
+    },
+    toggleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: T.spacing.sm,
+      backgroundColor: colors.surface,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    toggleInfo: { gap: T.spacing.xxs },
+    toggleLabel: {
+      fontSize: T.fontSize.md,
+      fontWeight: T.fontWeight.medium,
+      color: colors.textPrimary,
+    },
+    toggleHint: { fontSize: T.fontSize.xs, color: colors.textMuted },
+    toggle: {
+      width: 46,
+      height: 26,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.borderStrong,
+      justifyContent: "center",
+      padding: 3,
+    },
+    toggleActive: { backgroundColor: colors.primaryAction },
+    toggleThumb: {
+      width: 20,
+      height: 20,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.primaryActionText,
+    },
+    toggleThumbActive: { alignSelf: "flex-end" },
+    footer: {
+      flexDirection: "row",
+      gap: T.spacing.sm,
+      padding: T.spacing.md,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    btn: { flex: 1 },
+  });
+}
+
 export function BarberForm({ visible, barber, onSave, onClose }: BarberFormProps) {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isEdit = !!barber;
   const [name, setName] = useState("");
   const [active, setActive] = useState(true);
@@ -56,7 +163,7 @@ export function BarberForm({ visible, barber, onSave, onClose }: BarberFormProps
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>{isEdit ? "Editar Barbeiro" : "Novo Barbeiro"}</Text>
             <Pressable onPress={onClose} hitSlop={8}>
-              <Ionicons name="close" size={22} color={T.colors.textPrimary} />
+              <Ionicons name="close" size={22} color={colors.textPrimary} />
             </Pressable>
           </View>
 
@@ -104,105 +211,3 @@ export function BarberForm({ visible, barber, onSave, onClose }: BarberFormProps
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: "flex-end" },
-  backdrop: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0,0,0,0.45)",
-  },
-  sheet: {
-    backgroundColor: T.colors.bg,
-    borderTopLeftRadius: T.radius.xl,
-    borderTopRightRadius: T.radius.xl,
-    maxHeight: "80%",
-    ...T.shadow.md,
-  },
-  sheetHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: T.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  sheetTitle: {
-    fontSize: T.fontSize.lg,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  form: {
-    padding: T.spacing.md,
-    gap: T.spacing.md,
-  },
-  avatarRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: T.spacing.md,
-    padding: T.spacing.sm,
-    backgroundColor: T.colors.surface,
-    borderRadius: T.radius.md,
-    borderWidth: 1,
-    borderColor: T.colors.border,
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.black,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarLetter: {
-    fontSize: T.fontSize.xl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.white,
-  },
-  avatarHint: {
-    flex: 1,
-    fontSize: T.fontSize.xs,
-    color: T.colors.textMuted,
-    fontStyle: "italic",
-  },
-  toggleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: T.spacing.sm,
-    backgroundColor: T.colors.surface,
-    borderRadius: T.radius.md,
-    borderWidth: 1,
-    borderColor: T.colors.border,
-  },
-  toggleInfo: { gap: T.spacing.xxs },
-  toggleLabel: {
-    fontSize: T.fontSize.md,
-    fontWeight: T.fontWeight.medium,
-    color: T.colors.textPrimary,
-  },
-  toggleHint: { fontSize: T.fontSize.xs, color: T.colors.textMuted },
-  toggle: {
-    width: 46,
-    height: 26,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.borderStrong,
-    justifyContent: "center",
-    padding: 3,
-  },
-  toggleActive: { backgroundColor: T.colors.black },
-  toggleThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.white,
-  },
-  toggleThumbActive: { alignSelf: "flex-end" },
-  footer: {
-    flexDirection: "row",
-    gap: T.spacing.sm,
-    padding: T.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: T.colors.border,
-  },
-  btn: { flex: 1 },
-});

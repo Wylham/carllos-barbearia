@@ -13,7 +13,8 @@ import {
 import { AppointmentCard } from "@/components/AppointmentCard";
 import { AppointmentForm } from "@/components/modals/AppointmentForm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { T } from "@/constants/theme";
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAppData } from "@/hooks/useAppData";
 import { formatDate, todayISO, toISODate, weekdayShort } from "@/lib/date";
 import { Appointment, AppointmentStatus } from "@/types";
@@ -34,7 +35,147 @@ function offsetDate(iso: string, days: number): string {
   return toISODate(dt);
 }
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: T.spacing.md,
+      paddingTop: T.spacing.lg,
+      paddingBottom: T.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
+    headerTitle: {
+      fontSize: T.fontSize.xl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    addBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.primaryAction,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    dateNav: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: T.spacing.sm,
+      paddingVertical: T.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    navArrow: {
+      padding: T.spacing.sm,
+      borderRadius: T.radius.md,
+    },
+    dateCenter: {
+      flex: 1,
+      alignItems: "center",
+      gap: T.spacing.xxs,
+    },
+    dateMain: {
+      fontSize: T.fontSize.md,
+      fontWeight: T.fontWeight.semibold,
+      color: colors.textPrimary,
+    },
+    dateBack: {
+      fontSize: T.fontSize.xs,
+      color: colors.textMuted,
+    },
+    pressed: { opacity: 0.6 },
+    filterRow: {
+      flexDirection: "row",
+      paddingHorizontal: T.spacing.sm,
+      paddingVertical: T.spacing.sm,
+      gap: T.spacing.xs,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    filterBtn: {
+      flex: 1,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: T.spacing.xxs,
+      paddingVertical: T.spacing.xs,
+      paddingHorizontal: T.spacing.xs,
+      borderRadius: T.radius.md,
+      borderWidth: 1.5,
+      borderColor: "transparent",
+      backgroundColor: colors.surface,
+    },
+    filterBtnActive: {
+      backgroundColor: colors.primaryAction,
+      borderColor: colors.primaryAction,
+    },
+    filterText: {
+      fontSize: T.fontSize.xs,
+      fontWeight: T.fontWeight.medium,
+      color: colors.textSecondary,
+    },
+    filterTextActive: { color: colors.primaryActionText },
+    filterBadge: {
+      minWidth: 16,
+      height: 16,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.borderStrong,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: 3,
+    },
+    filterBadgeActive: { backgroundColor: colors.primaryActionText },
+    filterBadgeText: {
+      fontSize: 9,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textSecondary,
+    },
+    filterBadgeTextActive: { color: colors.primaryAction },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    list: {
+      padding: T.spacing.md,
+      gap: T.spacing.sm,
+    },
+    empty: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      gap: T.spacing.md,
+      padding: T.spacing.xl,
+    },
+    emptyTitle: {
+      fontSize: T.fontSize.md,
+      fontWeight: T.fontWeight.semibold,
+      color: colors.textSecondary,
+      textAlign: "center",
+    },
+    emptyBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: T.spacing.xs,
+      paddingVertical: T.spacing.sm,
+      paddingHorizontal: T.spacing.md,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    emptyBtnText: {
+      fontSize: T.fontSize.sm,
+      color: colors.textSecondary,
+    },
+  });
+}
+
 export default function AgendaScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     appointments, services, barbers, loading,
     addAppointment, updateAppointment, deleteAppointment, hasConflict,
@@ -103,14 +244,14 @@ export default function AgendaScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="calendar" size={22} color={T.colors.black} />
+          <Ionicons name="calendar" size={22} color={colors.primaryAction} />
           <Text style={styles.headerTitle}>Agenda</Text>
         </View>
         <Pressable
           onPress={openCreate}
           style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
         >
-          <Ionicons name="add" size={22} color={T.colors.white} />
+          <Ionicons name="add" size={22} color={colors.primaryActionText} />
         </Pressable>
       </View>
 
@@ -121,7 +262,7 @@ export default function AgendaScreen() {
           style={({ pressed }) => [styles.navArrow, pressed && styles.pressed]}
           hitSlop={8}
         >
-          <Ionicons name="chevron-back" size={20} color={T.colors.textPrimary} />
+          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
         </Pressable>
         <Pressable
           onPress={() => setSelectedDate(todayStr)}
@@ -137,7 +278,7 @@ export default function AgendaScreen() {
           style={({ pressed }) => [styles.navArrow, pressed && styles.pressed]}
           hitSlop={8}
         >
-          <Ionicons name="chevron-forward" size={20} color={T.colors.textPrimary} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
         </Pressable>
       </View>
 
@@ -171,11 +312,11 @@ export default function AgendaScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={T.colors.black} />
+          <ActivityIndicator size="large" color={colors.primaryAction} />
         </View>
       ) : dayAppointments.length === 0 ? (
         <View style={styles.empty}>
-          <Ionicons name="calendar-outline" size={48} color={T.colors.border} />
+          <Ionicons name="calendar-outline" size={48} color={colors.border} />
           <Text style={styles.emptyTitle}>
             {allDayCount === 0
               ? "Nenhum agendamento para este dia"
@@ -183,7 +324,7 @@ export default function AgendaScreen() {
           </Text>
           {allDayCount === 0 && (
             <Pressable onPress={openCreate} style={styles.emptyBtn}>
-              <Ionicons name="add-circle-outline" size={16} color={T.colors.textSecondary} />
+              <Ionicons name="add-circle-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.emptyBtnText}>Adicionar agendamento</Text>
             </Pressable>
           )}
@@ -235,139 +376,3 @@ export default function AgendaScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.colors.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: T.spacing.md,
-    paddingTop: T.spacing.lg,
-    paddingBottom: T.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
-  headerTitle: {
-    fontSize: T.fontSize.xl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  addBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.black,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  dateNav: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: T.spacing.sm,
-    paddingVertical: T.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-    backgroundColor: T.colors.surface,
-  },
-  navArrow: {
-    padding: T.spacing.sm,
-    borderRadius: T.radius.md,
-  },
-  dateCenter: {
-    flex: 1,
-    alignItems: "center",
-    gap: T.spacing.xxs,
-  },
-  dateMain: {
-    fontSize: T.fontSize.md,
-    fontWeight: T.fontWeight.semibold,
-    color: T.colors.textPrimary,
-  },
-  dateBack: {
-    fontSize: T.fontSize.xs,
-    color: T.colors.textMuted,
-  },
-  pressed: { opacity: 0.6 },
-  filterRow: {
-    flexDirection: "row",
-    paddingHorizontal: T.spacing.sm,
-    paddingVertical: T.spacing.sm,
-    gap: T.spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  filterBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: T.spacing.xxs,
-    paddingVertical: T.spacing.xs,
-    paddingHorizontal: T.spacing.xs,
-    borderRadius: T.radius.md,
-    borderWidth: 1.5,
-    borderColor: "transparent",
-    backgroundColor: T.colors.surface,
-  },
-  filterBtnActive: {
-    backgroundColor: T.colors.black,
-    borderColor: T.colors.black,
-  },
-  filterText: {
-    fontSize: T.fontSize.xs,
-    fontWeight: T.fontWeight.medium,
-    color: T.colors.textSecondary,
-  },
-  filterTextActive: { color: T.colors.white },
-  filterBadge: {
-    minWidth: 16,
-    height: 16,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.borderStrong,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 3,
-  },
-  filterBadgeActive: { backgroundColor: T.colors.white },
-  filterBadgeText: {
-    fontSize: 9,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textSecondary,
-  },
-  filterBadgeTextActive: { color: T.colors.black },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  list: {
-    padding: T.spacing.md,
-    gap: T.spacing.sm,
-  },
-  empty: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: T.spacing.md,
-    padding: T.spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: T.fontSize.md,
-    fontWeight: T.fontWeight.semibold,
-    color: T.colors.textSecondary,
-    textAlign: "center",
-  },
-  emptyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: T.spacing.xs,
-    paddingVertical: T.spacing.sm,
-    paddingHorizontal: T.spacing.md,
-    borderRadius: T.radius.md,
-    borderWidth: 1,
-    borderColor: T.colors.border,
-    backgroundColor: T.colors.surface,
-  },
-  emptyBtnText: {
-    fontSize: T.fontSize.sm,
-    color: T.colors.textSecondary,
-  },
-});

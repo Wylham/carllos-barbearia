@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -13,11 +13,124 @@ import {
 import { BarberForm } from "@/components/modals/BarberForm";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { T } from "@/constants/theme";
+import { AppColors, T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useAppData } from "@/hooks/useAppData";
 import { Barber } from "@/types";
 
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.bg },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: T.spacing.md,
+      paddingTop: T.spacing.lg,
+      paddingBottom: T.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
+    headerTitle: {
+      fontSize: T.fontSize.xl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    center: { flex: 1, justifyContent: "center", alignItems: "center" },
+    statsRow: {
+      flexDirection: "row",
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    statBox: {
+      flex: 1,
+      alignItems: "center",
+      paddingVertical: T.spacing.md,
+      gap: T.spacing.xxs,
+    },
+    statBoxDivider: {
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderColor: colors.border,
+    },
+    statValue: {
+      fontSize: T.fontSize.xxl,
+      fontWeight: T.fontWeight.bold,
+      color: colors.textPrimary,
+    },
+    statLabel: {
+      fontSize: T.fontSize.xs,
+      color: colors.textMuted,
+      textTransform: "uppercase",
+      letterSpacing: 0.5,
+    },
+    list: {
+      padding: T.spacing.md,
+      gap: T.spacing.xs,
+    },
+    item: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: T.spacing.sm,
+      padding: T.spacing.sm,
+      paddingHorizontal: T.spacing.md,
+      backgroundColor: colors.surface,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    itemInactive: { opacity: 0.6 },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: T.radius.full,
+      backgroundColor: colors.primaryAction,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    avatarInactive: { backgroundColor: colors.textMuted },
+    avatarLetter: {
+      fontSize: T.fontSize.lg,
+      fontWeight: T.fontWeight.bold,
+      color: colors.primaryActionText,
+    },
+    itemInfo: { flex: 1, gap: 2 },
+    itemName: {
+      fontSize: T.fontSize.md,
+      fontWeight: T.fontWeight.medium,
+      color: colors.textPrimary,
+    },
+    itemStatus: {
+      fontSize: T.fontSize.xs,
+      color: colors.done,
+    },
+    textInactive: { color: colors.textMuted },
+    itemActions: { flexDirection: "row", gap: T.spacing.xs },
+    iconBtn: {
+      padding: T.spacing.xs,
+      borderRadius: T.radius.sm,
+    },
+    pressed: { opacity: 0.6 },
+    empty: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      gap: T.spacing.md,
+      padding: T.spacing.xl,
+    },
+    emptyTitle: {
+      fontSize: T.fontSize.lg,
+      fontWeight: T.fontWeight.semibold,
+      color: colors.textSecondary,
+      textAlign: "center",
+    },
+  });
+}
+
 export default function BarbeirosScreen() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { barbers, loading, addBarber, updateBarber, deleteBarber } = useAppData();
 
   const [formVisible, setFormVisible] = useState(false);
@@ -70,14 +183,13 @@ export default function BarbeirosScreen() {
           <Text style={[styles.itemName, !item.active && styles.textInactive]}>
             {item.name}
           </Text>
-          <Text style={[styles.itemStatus, !item.active && { color: T.colors.textMuted }]}>
+          <Text style={[styles.itemStatus, !item.active && { color: colors.textMuted }]}>
             {item.active ? "● Ativo" : "○ Inativo"}
           </Text>
         </View>
 
         {/* Ações */}
         <View style={styles.itemActions}>
-          {/* Toggle ativo/inativo */}
           <Pressable
             onPress={() => handleToggleActive(item)}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
@@ -86,7 +198,7 @@ export default function BarbeirosScreen() {
             <Ionicons
               name={item.active ? "eye-off-outline" : "eye-outline"}
               size={20}
-              color={T.colors.textSecondary}
+              color={colors.textSecondary}
             />
           </Pressable>
           <Pressable
@@ -94,14 +206,14 @@ export default function BarbeirosScreen() {
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
             hitSlop={6}
           >
-            <Ionicons name="create-outline" size={20} color={T.colors.textSecondary} />
+            <Ionicons name="create-outline" size={20} color={colors.textSecondary} />
           </Pressable>
           <Pressable
             onPress={() => setDeleteTarget(item)}
             style={({ pressed }) => [styles.iconBtn, pressed && styles.pressed]}
             hitSlop={6}
           >
-            <Ionicons name="trash-outline" size={20} color={T.colors.cancelled} />
+            <Ionicons name="trash-outline" size={20} color={colors.cancelled} />
           </Pressable>
         </View>
       </View>
@@ -113,7 +225,7 @@ export default function BarbeirosScreen() {
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <Ionicons name="people" size={22} color={T.colors.black} />
+          <Ionicons name="people" size={22} color={colors.primaryAction} />
           <Text style={styles.headerTitle}>Barbeiros</Text>
         </View>
         <Button label="+ Novo" onPress={openCreate} size="sm" />
@@ -121,7 +233,7 @@ export default function BarbeirosScreen() {
 
       {loading ? (
         <View style={styles.center}>
-          <ActivityIndicator size="large" color={T.colors.black} />
+          <ActivityIndicator size="large" color={colors.primaryAction} />
         </View>
       ) : (
         <>
@@ -132,11 +244,11 @@ export default function BarbeirosScreen() {
               <Text style={styles.statLabel}>Total</Text>
             </View>
             <View style={[styles.statBox, styles.statBoxDivider]}>
-              <Text style={[styles.statValue, { color: T.colors.done }]}>{activeBarbers.length}</Text>
+              <Text style={[styles.statValue, { color: colors.done }]}>{activeBarbers.length}</Text>
               <Text style={styles.statLabel}>Ativos</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={[styles.statValue, { color: T.colors.textMuted }]}>
+              <Text style={[styles.statValue, { color: colors.textMuted }]}>
                 {inactiveBarbers.length}
               </Text>
               <Text style={styles.statLabel}>Inativos</Text>
@@ -145,7 +257,7 @@ export default function BarbeirosScreen() {
 
           {sortedBarbers.length === 0 ? (
             <View style={styles.empty}>
-              <Ionicons name="people-outline" size={48} color={T.colors.border} />
+              <Ionicons name="people-outline" size={48} color={colors.border} />
               <Text style={styles.emptyTitle}>Nenhum barbeiro cadastrado</Text>
               <Button label="Criar primeiro barbeiro" onPress={openCreate} variant="secondary" />
             </View>
@@ -180,111 +292,3 @@ export default function BarbeirosScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: T.colors.bg },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: T.spacing.md,
-    paddingTop: T.spacing.lg,
-    paddingBottom: T.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  headerLeft: { flexDirection: "row", alignItems: "center", gap: T.spacing.sm },
-  headerTitle: {
-    fontSize: T.fontSize.xl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
-  statsRow: {
-    flexDirection: "row",
-    borderBottomWidth: 1,
-    borderBottomColor: T.colors.border,
-  },
-  statBox: {
-    flex: 1,
-    alignItems: "center",
-    paddingVertical: T.spacing.md,
-    gap: T.spacing.xxs,
-  },
-  statBoxDivider: {
-    borderLeftWidth: 1,
-    borderRightWidth: 1,
-    borderColor: T.colors.border,
-  },
-  statValue: {
-    fontSize: T.fontSize.xxl,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
-  },
-  statLabel: {
-    fontSize: T.fontSize.xs,
-    color: T.colors.textMuted,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  list: {
-    padding: T.spacing.md,
-    gap: T.spacing.xs,
-  },
-  item: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: T.spacing.sm,
-    padding: T.spacing.sm,
-    paddingHorizontal: T.spacing.md,
-    backgroundColor: T.colors.surface,
-    borderRadius: T.radius.md,
-    borderWidth: 1,
-    borderColor: T.colors.border,
-  },
-  itemInactive: { opacity: 0.6 },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: T.radius.full,
-    backgroundColor: T.colors.black,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarInactive: { backgroundColor: T.colors.textMuted },
-  avatarLetter: {
-    fontSize: T.fontSize.lg,
-    fontWeight: T.fontWeight.bold,
-    color: T.colors.white,
-  },
-  itemInfo: { flex: 1, gap: 2 },
-  itemName: {
-    fontSize: T.fontSize.md,
-    fontWeight: T.fontWeight.medium,
-    color: T.colors.textPrimary,
-  },
-  itemStatus: {
-    fontSize: T.fontSize.xs,
-    color: T.colors.done,
-  },
-  textInactive: { color: T.colors.textMuted },
-  itemActions: { flexDirection: "row", gap: T.spacing.xs },
-  iconBtn: {
-    padding: T.spacing.xs,
-    borderRadius: T.radius.sm,
-  },
-  pressed: { opacity: 0.6 },
-  empty: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    gap: T.spacing.md,
-    padding: T.spacing.xl,
-  },
-  emptyTitle: {
-    fontSize: T.fontSize.lg,
-    fontWeight: T.fontWeight.semibold,
-    color: T.colors.textSecondary,
-    textAlign: "center",
-  },
-});

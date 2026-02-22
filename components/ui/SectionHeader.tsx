@@ -1,6 +1,8 @@
-import { T } from "@/constants/theme";
 import React from "react";
 import { StyleSheet, Text, View, ViewStyle } from "react-native";
+
+import { T } from "@/constants/theme";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SectionHeaderProps {
   title: string;
@@ -10,11 +12,13 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, subtitle, right, style }: SectionHeaderProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
       <View style={styles.textGroup}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text> : null}
       </View>
       {right ? <View style={styles.right}>{right}</View> : null}
     </View>
@@ -35,12 +39,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: T.fontSize.lg,
     fontWeight: T.fontWeight.bold,
-    color: T.colors.textPrimary,
     letterSpacing: 0.3,
   },
   subtitle: {
     fontSize: T.fontSize.sm,
-    color: T.colors.textMuted,
   },
   right: {
     marginLeft: T.spacing.sm,
