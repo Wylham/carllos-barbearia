@@ -1,50 +1,225 @@
-# Welcome to your Expo app 👋
+﻿# Carllos Barbearia — Aplicativo de Gestão para Barbearia
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> **Trabalho de Extensão Universitária**
+> Disciplina: **PROGRAMAÇÃO PARA DISPOSITIVOS MÓVEIS EM ANDROID (305)**
+> Curso: Análise e Desenvolvimento de Sistemas
+> Período: 2026/1 (5°)
 
-## Get started
+---
 
-1. Install dependencies
+## Sobre o Projeto
+
+O **Carllos Barbearia** é um aplicativo mobile desenvolvido como **projeto de extensão** da disciplina de Programação para Dispositivos Móveis em Android (código 305). O objetivo é aplicar, em um contexto real e útil para a comunidade, os conhecimentos adquiridos em sala — criando uma solução prática para uma barbearia local.
+
+O aplicativo oferece uma plataforma completa de **gestão de agendamentos, barbeiros e serviços**, substituindo o controle feito em papel ou em aplicativos genéricos por uma ferramenta dedicada e intuitiva.
+
+---
+
+## Contexto da Extensão
+
+A extensão universitária conecta o conhecimento acadêmico à prática social. Este projeto foi desenvolvido para atender às necessidades reais de uma barbearia de pequeno porte, demonstrando como o desenvolvimento mobile pode:
+
+- Digitalizar processos manuais de agendamento;
+- Reduzir erros operacionais e conflitos de horário;
+- Fornecer métricas de desempenho ao gestor do negócio;
+- Melhorar a experiência do profissional autônomo no dia a dia.
+
+---
+
+## Funcionalidades
+
+### Dashboard (Início)
+
+- Resumo do dia: total de agendamentos, concluídos, cancelados e pendentes;
+- Receita do mês atual com indicador de variação;
+- Próximos agendamentos em destaque;
+- Acesso rápido para criar novo agendamento.
+
+### Agenda
+
+- Calendário interativo em português para navegação por data;
+- Listagem de agendamentos com filtros por status: **Agendado**, **Concluído** e **Cancelado**;
+- Criação, edição e exclusão de agendamentos;
+- Campos: cliente, telefone, data, horário, barbeiro, serviço, preço e observações;
+- Diálogo de confirmação antes de cancelar ou excluir;
+- Animação de transição com `LayoutAnimation` no Android.
+
+### Barbeiros
+
+- Cadastro, edição e exclusão de barbeiros;
+- Soft-delete: barbeiros com agendamentos vinculados são desativados em vez de excluídos;
+- Estatísticas por barbeiro: total de agendamentos, receita gerada e número de clientes atendidos.
+
+### Serviços
+
+- Cadastro, edição e exclusão de serviços com nome e preço;
+- Soft-delete: serviços com agendamentos vinculados são desativados em vez de excluídos.
+
+### Tema Claro / Escuro
+
+- Alternância automática conforme as configurações do sistema;
+- Suporte manual via tela de configurações.
+
+---
+
+## Tecnologias Utilizadas
+
+| Tecnologia              | Versão    | Finalidade                                 |
+| ----------------------- | --------- | ------------------------------------------ |
+| React Native            | 0.81.5    | Framework base para desenvolvimento mobile |
+| Expo                    | ~54.0.33  | Plataforma e ferramentas de build          |
+| Expo Router             | ~6.0.23   | Navegação baseada em sistema de arquivos   |
+| TypeScript              | ~5.9.2    | Tipagem estática                           |
+| AsyncStorage            | ^2.2.0    | Persistência de dados local                |
+| React Native Calendars  | ^1.1314.0 | Componente de calendário interativo        |
+| React Navigation        | ^7.4.0    | Navegação por abas                         |
+| Expo Vector Icons       | ^15.0.3   | Ícones (Ionicons)                          |
+| React Native Reanimated | ~4.1.1    | Animações de interface                     |
+
+---
+
+## Arquitetura do Projeto
+
+```
+meu-app/
+ app/
+    _layout.tsx          # Layout raiz (Provider de temas e dados)
+    modal.tsx            # Tela modal genérica
+    settings.tsx         # Configurações (tema)
+    (tabs)/
+        _layout.tsx      # Navegação por abas
+        index.tsx        # Dashboard
+        agenda.tsx       # Gestão de agendamentos
+        barbeiros.tsx    # Gestão de barbeiros
+        servicos.tsx     # Gestão de serviços
+ components/
+    AppointmentCard.tsx  # Card de agendamento
+    modals/              # Formulários modais (Agendamento, Barbeiro, Serviço)
+    ui/                  # Componentes reutilizáveis (Button, Card, Input, etc.)
+ constants/
+    theme.ts             # Design tokens (cores, espaçamentos, tipografia)
+ contexts/
+    AppDataContext.tsx   # Estado global (agendamentos, barbeiros, serviços)
+    ThemeContext.tsx     # Estado global de tema
+ hooks/
+    useAppData.ts        # Hook de acesso ao contexto de dados
+ lib/
+    date.ts              # Utilitários de data
+    storage.ts           # Abstração do AsyncStorage
+ types/
+     index.ts             # Tipos e interfaces (Appointment, Barber, Service)
+```
+
+---
+
+## Modelo de Dados
+
+### `Appointment` (Agendamento)
+
+```ts
+interface Appointment {
+  id: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  clientName: string;
+  phone?: string;
+  serviceId: string;
+  barberId: string;
+  price: number;
+  status: AppointmentStatus; // "scheduled" | "done" | "cancelled"
+  notes?: string;
+  createdAt: string;
+}
+```
+
+### `Barber` (Barbeiro)
+
+```ts
+interface Barber {
+  id: string;
+  name: string;
+  active: boolean;
+  createdAt: string;
+}
+```
+
+### `Service` (Serviço)
+
+```ts
+interface Service {
+  id: string;
+  name: string;
+  price: number;
+  active: boolean;
+  createdAt: string;
+}
+```
+
+---
+
+## Como Executar
+
+### Pré-requisitos
+
+- Node.js 18+
+- npm ou yarn
+- Expo Go instalado no dispositivo Android **ou** Android Studio (emulador)
+
+### Passo a passo
+
+1. **Clone ou baixe o repositório** e acesse a pasta do projeto:
+
+   ```bash
+   cd meu-app
+   ```
+
+2. **Instale as dependências:**
 
    ```bash
    npm install
    ```
 
-2. Start the app
+3. **Inicie o servidor de desenvolvimento:**
 
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+4. **Execute no Android:**
+   - **Dispositivo físico:** escaneie o QR Code com o aplicativo **Expo Go**;
+   - **Emulador:** pressione `a` no terminal para abrir no emulador Android.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Scripts Disponíveis
 
-## Get a fresh project
+| Comando           | Descrição                            |
+| ----------------- | ------------------------------------ |
+| `npm start`       | Inicia o servidor Expo               |
+| `npm run android` | Abre diretamente no emulador Android |
+| `npm run ios`     | Abre no simulador iOS (macOS)        |
+| `npm run web`     | Abre versão web no navegador         |
+| `npm run lint`    | Executa o linter (ESLint)            |
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
-```
+## Aprendizados e Competências Desenvolvidas
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Este projeto consolidou as seguintes competências da disciplina de **Programação para Dispositivos Móveis em Android (305)**:
 
-## Learn more
+- Criação de interfaces nativas com **React Native** e **StyleSheet**;
+- Navegação entre telas com **Expo Router** (file-based routing) e **React Navigation**;
+- Gerenciamento de estado global com **React Context API**;
+- Persistência de dados local com **AsyncStorage**;
+- Componentização e reutilização de componentes;
+- Utilização de hooks personalizados (`useAppData`, `useTheme`);
+- Animações de interface com `LayoutAnimation` e `Reanimated`;
+- Suporte a temas claro e escuro;
+- Tipagem de dados com **TypeScript**;
+- Boas práticas de UX para dispositivos móveis Android.
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Licença
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Este projeto foi desenvolvido exclusivamente para fins acadêmicos e de extensão universitária.
