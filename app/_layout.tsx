@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 
+import { AppDataProvider } from "@/contexts/AppDataContext";
 import { AppThemeProvider, useTheme } from "@/contexts/ThemeContext";
 
 export const unstable_settings = {
@@ -40,10 +41,7 @@ function RootLayoutInner() {
     <ThemeProvider value={NavTheme}>
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="settings"
-          options={{ presentation: "modal", title: "Configurações", headerShown: true }}
-        />
+        <Stack.Screen name="settings" options={{ presentation: "modal", title: "Configurações", headerShown: true }} />
       </Stack>
       <StatusBar style={isDark ? "light" : "dark"} backgroundColor={isDark ? "#111111" : "#FFFFFF"} />
     </ThemeProvider>
@@ -53,7 +51,9 @@ function RootLayoutInner() {
 export default function RootLayout() {
   return (
     <AppThemeProvider>
-      <RootLayoutInner />
+      <AppDataProvider>
+        <RootLayoutInner />
+      </AppDataProvider>
     </AppThemeProvider>
   );
 }
