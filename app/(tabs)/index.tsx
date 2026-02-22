@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 
+import LogoBlack from "@/assets/images/logo-carllos/black_textlogo_transparent_background.svg";
+import LogoWhite from "@/assets/images/logo-carllos/white_textlogo_transparent_background.svg";
 import { AppColors, T } from "@/constants/theme";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAppData } from "@/hooks/useAppData";
@@ -66,19 +68,6 @@ function createStyles(colors: AppColors) {
       paddingBottom: T.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-    },
-    brandLabel: {
-      fontSize: T.fontSize.xs,
-      fontWeight: T.fontWeight.medium,
-      color: colors.textMuted,
-      letterSpacing: 3,
-    },
-    brandName: {
-      fontSize: T.fontSize.xxl,
-      fontWeight: T.fontWeight.extrabold,
-      color: colors.textPrimary,
-      letterSpacing: 2,
-      marginTop: -2,
     },
     settingsBtn: { padding: T.spacing.xs },
     loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
@@ -227,7 +216,7 @@ function createStyles(colors: AppColors) {
 
 export default function DashboardScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const { appointments, services, barbers, loading } = useAppData();
 
@@ -292,10 +281,11 @@ export default function DashboardScreen() {
     <SafeAreaView style={styles.safe}>
       {/* Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.brandLabel}>BARBEARIA</Text>
-          <Text style={styles.brandName}>CARLLOS</Text>
-        </View>
+        {isDark ? (
+          <LogoWhite width={90} height={54} />
+        ) : (
+          <LogoBlack width={90} height={54} />
+        )}
         <Pressable
           onPress={() => router.push("/settings")}
           style={({ pressed }) => [styles.settingsBtn, pressed && { opacity: 0.6 }]}
