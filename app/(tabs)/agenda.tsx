@@ -3,12 +3,16 @@ import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
+  LayoutAnimation,
+  Platform,
   Pressable,
   SafeAreaView,
   StyleSheet,
   Text,
+  UIManager,
   View,
 } from "react-native";
+import { Calendar, LocaleConfig } from "react-native-calendars";
 
 import { AppointmentCard } from "@/components/AppointmentCard";
 import { AppointmentForm } from "@/components/modals/AppointmentForm";
@@ -16,8 +20,36 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { AppColors, T } from "@/constants/theme";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAppData } from "@/hooks/useAppData";
-import { formatDate, todayISO, toISODate, weekdayShort } from "@/lib/date";
+import { formatDate, todayISO, weekdayShort } from "@/lib/date";
 import { Appointment, AppointmentStatus } from "@/types";
+
+// Ativa LayoutAnimation no Android
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// Localização em português
+LocaleConfig.locales["pt-br"] = {
+  monthNames: [
+    "Janeiro",
+    "Fevereiro",
+    "Março",
+    "Abril",
+    "Maio",
+    "Junho",
+    "Julho",
+    "Agosto",
+    "Setembro",
+    "Outubro",
+    "Novembro",
+    "Dezembro",
+  ],
+  monthNamesShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
+  dayNames: ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"],
+  dayNamesShort: ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"],
+  today: "Hoje",
+};
+LocaleConfig.defaultLocale = "pt-br";
 
 type Filter = "all" | AppointmentStatus;
 
@@ -28,16 +60,11 @@ const FILTERS: { label: string; value: Filter }[] = [
   { label: "Cancelados", value: AppointmentStatus.CANCELLED },
 ];
 
-function offsetDate(iso: string, days: number): string {
-  const [y, m, d] = iso.split("-").map(Number);
-  const dt = new Date(y, m - 1, d);
-  dt.setDate(dt.getDate() + days);
-  return toISODate(dt);
-}
-
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.bg },
+
+    // ── Header ──────────────────────────────────────────────────────────────
     header: {
       flexDirection: "row",
       alignItems: "center",
@@ -54,6 +81,20 @@ function createStyles(colors: AppColors) {
       fontWeight: T.fontWeight.bold,
       color: colors.textPrimary,
     },
+    headerActions: { flexDirection: "row", alignItems: "center", gap: T.spacing.xs },
+    todayBtn: {
+      paddingHorizontal: T.spacing.sm,
+      paddingVertical: T.spacing.xs,
+      borderRadius: T.radius.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+    },
+    todayBtnText: {
+      fontSize: T.fontSize.xs,
+      fontWeight: T.fontWeight.semibold,
+      color: colors.textSecondary,
+    },
     addBtn: {
       width: 36,
       height: 36,
@@ -62,33 +103,71 @@ function createStyles(colors: AppColors) {
       justifyContent: "center",
       alignItems: "center",
     },
-    dateNav: {
+
+    // ── Toggle calendário ────────────────────────────────────────────────────
+    calendarToggle: {
       flexDirection: "row",
       alignItems: "center",
-      paddingHorizontal: T.spacing.sm,
+      justifyContent: "space-between",
+      paddingHorizontal: T.spacing.md,
       paddingVertical: T.spacing.sm,
+      backgroundColor: colors.surface,
       borderBottomWidth: 1,
       borderBottomColor: colors.border,
-      backgroundColor: colors.surface,
     },
-    navArrow: {
-      padding: T.spacing.sm,
-      borderRadius: T.radius.md,
-    },
-    dateCenter: {
-      flex: 1,
+    calendarToggleLeft: {
+      flexDirection: "row",
       alignItems: "center",
-      gap: T.spacing.xxs,
+      gap: T.spacing.xs,
     },
-    dateMain: {
+    calendarToggleText: {
+      fontSize: T.fontSize.sm,
+      fontWeight: T.fontWeight.medium,
+      color: colors.textSecondary,
+    },
+    calendarWrapper: {
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+      overflow: "hidden",
+    },
+
+    // ── Barra de data selecionada ────────────────────────────────────────────
+    selectedDateBar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: T.spacing.md,
+      paddingVertical: T.spacing.sm,
+      backgroundColor: colors.surfaceAlt,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    selectedDateText: {
       fontSize: T.fontSize.md,
       fontWeight: T.fontWeight.semibold,
       color: colors.textPrimary,
     },
-    dateBack: {
-      fontSize: T.fontSize.xs,
+    selectedDateCount: {
+      fontSize: T.fontSize.sm,
       color: colors.textMuted,
     },
+
+    // ── Legenda ──────────────────────────────────────────────────────────────
+    legend: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: T.spacing.md,
+      paddingHorizontal: T.spacing.md,
+      paddingVertical: T.spacing.xs,
+      backgroundColor: colors.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: colors.border,
+    },
+    legendItem: { flexDirection: "row", alignItems: "center", gap: T.spacing.xs },
+    legendDot: { width: 8, height: 8, borderRadius: T.radius.full },
+    legendText: { fontSize: T.fontSize.xs, color: colors.textMuted },
+
+    // ── Filtros ──────────────────────────────────────────────────────────────
     pressed: { opacity: 0.6 },
     filterRow: {
       flexDirection: "row",
@@ -137,6 +216,8 @@ function createStyles(colors: AppColors) {
       color: colors.textSecondary,
     },
     filterBadgeTextActive: { color: colors.primaryAction },
+
+    // ── Lista ────────────────────────────────────────────────────────────────
     center: { flex: 1, justifyContent: "center", alignItems: "center" },
     list: {
       padding: T.spacing.md,
@@ -173,15 +254,58 @@ function createStyles(colors: AppColors) {
   });
 }
 
+/** Constrói o tema do react-native-calendars baseado nas cores do app. */
+function buildCalendarTheme(colors: AppColors) {
+  return {
+    calendarBackground: colors.surface,
+    textSectionTitleColor: colors.textMuted,
+    textSectionTitleDisabledColor: colors.textDisabled,
+    selectedDayBackgroundColor: colors.primaryAction,
+    selectedDayTextColor: colors.primaryActionText,
+    todayTextColor: colors.info,
+    todayBackgroundColor: "transparent",
+    dayTextColor: colors.textPrimary,
+    textDisabledColor: colors.textDisabled,
+    dotColor: colors.scheduled,
+    selectedDotColor: colors.primaryActionText,
+    arrowColor: colors.textPrimary,
+    disabledArrowColor: colors.textDisabled,
+    monthTextColor: colors.textPrimary,
+    indicatorColor: colors.textPrimary,
+    textDayFontWeight: "400" as const,
+    textMonthFontWeight: "700" as const,
+    textDayHeaderFontWeight: "600" as const,
+    textDayFontSize: 14,
+    textMonthFontSize: 16,
+    textDayHeaderFontSize: 12,
+    // Estilos extras — borda sutil no dia de hoje
+    "stylesheet.day.basic": {
+      today: {
+        borderWidth: 1.5,
+        borderColor: colors.info,
+        borderRadius: 20,
+      },
+    },
+  };
+}
+
 export default function AgendaScreen() {
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const calendarTheme = useMemo(() => buildCalendarTheme(colors), [colors]);
   const {
-    appointments, services, barbers, loading,
-    addAppointment, updateAppointment, deleteAppointment, hasConflict,
+    appointments,
+    services,
+    barbers,
+    loading,
+    addAppointment,
+    updateAppointment,
+    deleteAppointment,
+    hasConflict,
   } = useAppData();
 
   const [selectedDate, setSelectedDate] = useState(todayISO());
+  const [calendarOpen, setCalendarOpen] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [formVisible, setFormVisible] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
@@ -189,6 +313,46 @@ export default function AgendaScreen() {
 
   const todayStr = todayISO();
 
+  // ── markedDates para o calendário ──────────────────────────────────────────
+  const markedDates = useMemo(() => {
+    const map: Record<
+      string,
+      { dots: { key: string; color: string; selectedDotColor: string }[]; selected?: boolean; selectedColor?: string }
+    > = {};
+
+    for (const appt of appointments) {
+      if (!map[appt.date]) {
+        map[appt.date] = { dots: [] };
+      }
+      const dotKey = appt.status;
+      const alreadyHas = map[appt.date].dots.some((d) => d.key === dotKey);
+      if (!alreadyHas) {
+        const dotColor =
+          appt.status === AppointmentStatus.SCHEDULED
+            ? colors.scheduled
+            : appt.status === AppointmentStatus.DONE
+              ? colors.done
+              : colors.cancelled;
+        map[appt.date].dots.push({
+          key: dotKey,
+          color: dotColor,
+          selectedDotColor: colors.primaryActionText,
+        });
+      }
+    }
+
+    // Marca o dia selecionado
+    if (!map[selectedDate]) map[selectedDate] = { dots: [] };
+    map[selectedDate] = {
+      ...map[selectedDate],
+      selected: true,
+      selectedColor: colors.primaryAction,
+    };
+
+    return map;
+  }, [appointments, selectedDate, colors]);
+
+  // ── Agendamentos do dia filtrados ──────────────────────────────────────────
   const dayAppointments = useMemo(() => {
     return appointments
       .filter((a) => {
@@ -200,6 +364,19 @@ export default function AgendaScreen() {
   }, [appointments, selectedDate, filter]);
 
   const allDayCount = appointments.filter((a) => a.date === selectedDate).length;
+
+  function handleDayPress(day: { dateString: string }) {
+    setSelectedDate(day.dateString);
+  }
+
+  function toggleCalendar() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setCalendarOpen((v) => !v);
+  }
+
+  function goToToday() {
+    setSelectedDate(todayStr);
+  }
 
   function openCreate() {
     setEditingAppointment(null);
@@ -241,48 +418,72 @@ export default function AgendaScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
+      {/* ── Header ──────────────────────────────────────────────────────── */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Ionicons name="calendar" size={22} color={colors.primaryAction} />
           <Text style={styles.headerTitle}>Agenda</Text>
         </View>
-        <Pressable
-          onPress={openCreate}
-          style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}
-        >
-          <Ionicons name="add" size={22} color={colors.primaryActionText} />
-        </Pressable>
-      </View>
-
-      {/* Seletor de data */}
-      <View style={styles.dateNav}>
-        <Pressable
-          onPress={() => setSelectedDate((d) => offsetDate(d, -1))}
-          style={({ pressed }) => [styles.navArrow, pressed && styles.pressed]}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-back" size={20} color={colors.textPrimary} />
-        </Pressable>
-        <Pressable
-          onPress={() => setSelectedDate(todayStr)}
-          style={styles.dateCenter}
-        >
-          <Text style={styles.dateMain}>{displayDate}</Text>
+        <View style={styles.headerActions}>
           {!isToday && (
-            <Text style={styles.dateBack}>Toque para voltar a hoje</Text>
+            <Pressable onPress={goToToday} style={({ pressed }) => [styles.todayBtn, pressed && styles.pressed]}>
+              <Text style={styles.todayBtnText}>Hoje</Text>
+            </Pressable>
           )}
-        </Pressable>
-        <Pressable
-          onPress={() => setSelectedDate((d) => offsetDate(d, 1))}
-          style={({ pressed }) => [styles.navArrow, pressed && styles.pressed]}
-          hitSlop={8}
-        >
-          <Ionicons name="chevron-forward" size={20} color={colors.textPrimary} />
-        </Pressable>
+          <Pressable onPress={openCreate} style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.7 }]}>
+            <Ionicons name="add" size={22} color={colors.primaryActionText} />
+          </Pressable>
+        </View>
       </View>
 
-      {/* Filtros */}
+      {/* ── Toggle do calendário ─────────────────────────────────────────── */}
+      <Pressable onPress={toggleCalendar} style={({ pressed }) => [styles.calendarToggle, pressed && styles.pressed]}>
+        <View style={styles.calendarToggleLeft}>
+          <Ionicons name={calendarOpen ? "chevron-up" : "chevron-down"} size={16} color={colors.textMuted} />
+          <Text style={styles.calendarToggleText}>{calendarOpen ? "Recolher calendário" : "Expandir calendário"}</Text>
+        </View>
+        {/* Legenda de cores */}
+        <View style={styles.legend}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.scheduled }]} />
+            <Text style={styles.legendText}>Agendado</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.done }]} />
+            <Text style={styles.legendText}>Concluído</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.cancelled }]} />
+            <Text style={styles.legendText}>Cancelado</Text>
+          </View>
+        </View>
+      </Pressable>
+
+      {/* ── Calendário mensal (react-native-calendars) ───────────────────── */}
+      {calendarOpen && (
+        <View style={styles.calendarWrapper}>
+          <Calendar
+            current={selectedDate}
+            onDayPress={handleDayPress}
+            markedDates={markedDates}
+            markingType="multi-dot"
+            theme={calendarTheme}
+            enableSwipeMonths
+            hideExtraDays
+            onMonthChange={() => {}}
+          />
+        </View>
+      )}
+
+      {/* ── Barra com data selecionada + contagem ─────────────────────────── */}
+      <View style={styles.selectedDateBar}>
+        <Text style={styles.selectedDateText}>{displayDate}</Text>
+        <Text style={styles.selectedDateCount}>
+          {allDayCount === 0 ? "Sem agendamentos" : `${allDayCount} agendamento${allDayCount > 1 ? "s" : ""}`}
+        </Text>
+      </View>
+
+      {/* ── Filtros ──────────────────────────────────────────────────────── */}
       <View style={styles.filterRow}>
         {FILTERS.map((f) => {
           const count =
@@ -295,9 +496,7 @@ export default function AgendaScreen() {
               onPress={() => setFilter(f.value)}
               style={[styles.filterBtn, filter === f.value && styles.filterBtnActive]}
             >
-              <Text style={[styles.filterText, filter === f.value && styles.filterTextActive]}>
-                {f.label}
-              </Text>
+              <Text style={[styles.filterText, filter === f.value && styles.filterTextActive]}>{f.label}</Text>
               {count > 0 && (
                 <View style={[styles.filterBadge, filter === f.value && styles.filterBadgeActive]}>
                   <Text style={[styles.filterBadgeText, filter === f.value && styles.filterBadgeTextActive]}>
@@ -310,6 +509,7 @@ export default function AgendaScreen() {
         })}
       </View>
 
+      {/* ── Lista de agendamentos ─────────────────────────────────────────── */}
       {loading ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primaryAction} />
@@ -318,9 +518,7 @@ export default function AgendaScreen() {
         <View style={styles.empty}>
           <Ionicons name="calendar-outline" size={48} color={colors.border} />
           <Text style={styles.emptyTitle}>
-            {allDayCount === 0
-              ? "Nenhum agendamento para este dia"
-              : "Nenhum resultado para o filtro"}
+            {allDayCount === 0 ? "Nenhum agendamento para este dia" : "Nenhum resultado para o filtro"}
           </Text>
           {allDayCount === 0 && (
             <Pressable onPress={openCreate} style={styles.emptyBtn}>
@@ -353,6 +551,7 @@ export default function AgendaScreen() {
         />
       )}
 
+      {/* ── Modais ───────────────────────────────────────────────────────── */}
       <AppointmentForm
         visible={formVisible}
         appointment={editingAppointment}
